@@ -57,6 +57,9 @@ install_dependencies :
 	sudo apt install libglm-dev
 	@echo "Installing SOIL Image Loader"
 	sudo apt install libsoil-dev
+	@echo "Initializing STB Submodule"
+	git submodule init
+	git submodule update
 	@echo "Installing Assimp Model Loader"
 	sudo apt install assimp-utils
 	sudo apt install libassimp-dev
