@@ -16,26 +16,25 @@ lib/libcamera-wrapper.a : bin/camera-wrapper.o
 	ar -rvs $@ $^
 
 bin/camera-wrapper.o : src/camera-wrapper.cpp  include/camera-wrapper.hpp
-	g++ $< -c -o $@ -O3 -I include
+	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
 
 lib/libtexture-wrapper.a : bin/texture-wrapper.o
 	ar -rvs $@ $^
 
 bin/texture-wrapper.o : src/texture-wrapper.cpp include/texture-wrapper.hpp
-	g++ $< -c -o $@ -O3 -I include
+	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
 
 lib/libprogram-wrapper.a : bin/program-wrapper.o
 	ar -rvs $@ $^
 
 bin/program-wrapper.o : src/program-wrapper.cpp include/program-wrapper.hpp
-	g++ $< -c -o $@ -O3 -I include
+	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
 
 lib/libshader-wrapper.a : bin/shader-wrapper.o
 	ar -rvs $@ $^
 
 bin/shader-wrapper.o : src/shader-wrapper.cpp include/shader-wrapper.hpp
-	g++ $< -c -o $@ -O3 -I include
-
+	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
 
 .PHONY : build_directories
 build_directories :

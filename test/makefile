@@ -11,19 +11,19 @@ exec/test-rect : bin/test-rect.o
 	g++ bin/test-rect.o -O3 -lGL -lGLU -lGLEW -lSDL2 -L../lib -l gl-wrapper -o exec/test-rect
 
 bin/test-rect.o : src/test-rect.cpp
-	g++ src/test-rect.cpp -O3 -c -o bin/test-rect.o -I../include
+	g++ src/test-rect.cpp -O3 -c -o bin/test-rect.o -I../include -I ../dependencies/stb
 
 exec/test-texture : bin/test-texture.o
 	g++ bin/test-texture.o -O3 -lGL -lGLU -lGLEW -lSDL2 -L../lib -l gl-wrapper -o exec/test-texture
 
 bin/test-texture.o : src/test-texture.cpp
-	g++ src/test-texture.cpp -O3 -c -o bin/test-texture.o  -I../include 
+	g++ src/test-texture.cpp -O3 -c -o bin/test-texture.o  -I../include -I ../dependencies/stb
 
 exec/test-camera : bin/test-camera.o
 	g++ bin/test-camera.o -O3 -lGL -lGLU -lGLEW -lSDL2 -L../lib -l gl-wrapper -o exec/test-camera
 
 bin/test-camera.o : src/test-camera.cpp
-	g++ src/test-camera.cpp -O3 -c -o bin/test-camera.o -I../include
+	g++ src/test-camera.cpp -O3 -c -o bin/test-camera.o -I../include -I ../dependencies/stb
 
 .PHONY : build_directories
 build_directories : 
