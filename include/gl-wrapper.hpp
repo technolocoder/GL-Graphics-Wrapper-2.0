@@ -2,6 +2,7 @@
 #define __GL_WRAPPER__
 
 #include <SDL2/SDL.h>
+#include "model-wrapper.hpp"
 #include "camera-wrapper.hpp"
 #include "program-wrapper.hpp"
 #include "texture-wrapper.hpp"

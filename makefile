@@ -3,15 +3,17 @@ build_all : build_directories lib/libgl-wrapper.a
 	$(MAKE) -C test 
 
 APP=test-rect
+OPTIMIZED= 
 
 export APP
 .PHONY : run
-run : build_all
+run : lib/libgl-wrapper.a build_directories
 	$(MAKE) -C test run 
 
-lib/libgl-wrapper.a : lib/libcamera-wrapper.a lib/libtexture-wrapper.a lib/libshader-wrapper.a lib/libprogram-wrapper.a
-	ar -rvs $@ bin/camera-wrapper.o bin/texture-wrapper.o bin/shader-wrapper.o bin/program-wrapper.o
-
+lib/libgl-wrapper.a : lib/libcamera-wrapper.a lib/libtexture-wrapper.a lib/libshader-wrapper.a lib/libprogram-wrapper.a lib/libmesh-wrapper.a lib/libmodel-wrapper.a 
+	ar -rvs $@ bin/camera-wrapper.o bin/texture-wrapper.o bin/shader-wrapper.o bin/program-wrapper.o bin/mesh-wrapper.o bin/model-wrapper.o
+	$(MAKE) -C test clean
+	
 lib/libcamera-wrapper.a : bin/camera-wrapper.o
 	ar -rvs $@ $^
 
@@ -34,6 +36,18 @@ lib/libshader-wrapper.a : bin/shader-wrapper.o
 	ar -rvs $@ $^
 
 bin/shader-wrapper.o : src/shader-wrapper.cpp include/shader-wrapper.hpp
+	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
+
+lib/libmesh-wrapper.a : bin/mesh-wrapper.o
+	ar -rvs $@ $^
+
+bin/mesh-wrapper.o : src/mesh-wrapper.cpp include/mesh-wrapper.hpp
+	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
+
+lib/libmodel-wrapper.a : bin/model-wrapper.o
+	ar -rvs $@ $^
+
+bin/model-wrapper.o : src/model-wrapper.cpp include/model-wrapper.hpp
 	g++ $< -c -o $@ -O3 -I include -I dependencies/stb
 
 .PHONY : build_directories
