@@ -85,7 +85,6 @@ void model::load_material(aiMaterial *material,aiTextureType ai_textype, TEXTURE
         string temp = path_str+string(1,'/')+string(file);
         if(mp.find(temp) == mp.end()){
             textures[i].initialize(temp.c_str());
-            cout << temp << " : " << texture_type << "\n";
             textures[i].texture_type = texture_type;
             mp[temp] = textures[i];
         }else{
