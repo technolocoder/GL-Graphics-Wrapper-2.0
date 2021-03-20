@@ -18,7 +18,7 @@ public:
 
     void destroy();
 private:
-    static std::string prefix[2];
+    static std::string prefix[3];
     GLuint vbo, ebo, vao;
     texture_2d *textures;
     int indices_count,texture_count;

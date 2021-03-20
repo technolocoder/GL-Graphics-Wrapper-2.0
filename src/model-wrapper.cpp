@@ -3,22 +3,23 @@ using namespace std;
 
 model::model() {}
 
-void model::initialize(string filepath){
+void model::initialize(string filepath,bool _gamma_corrected){
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(filepath,aiProcess_Triangulate|aiProcess_FlipUVs|aiProcess_OptimizeGraph|aiProcess_OptimizeMeshes|aiProcess_ImproveCacheLocality);
+    const aiScene *scene = importer.ReadFile(filepath,aiProcess_Triangulate|aiProcess_FlipUVs|aiProcess_OptimizeGraph|aiProcess_OptimizeMeshes|aiProcess_ImproveCacheLocality|aiProcess_CalcTangentSpace);
 
     if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
         cout << importer.GetErrorString() << '\n';
     }
     
+    gamma_corrected = _gamma_corrected;
     path_str = filepath.substr(0,filepath.find_last_of('/'));
     comp_size(scene->mRootNode);
     meshes = (mesh*)malloc(sizeof(mesh)*mesh_count);
     process_node(scene, scene->mRootNode);
 }
 
-model::model(string filepath){
-    initialize(filepath);
+model::model(string filepath,bool _gamma_corrected){
+    initialize(filepath,_gamma_corrected);
 }
 
 void model::process_node(const aiScene *scene ,aiNode *node){
@@ -27,32 +28,48 @@ void model::process_node(const aiScene *scene ,aiNode *node){
 }
 
 void model::process_mesh(const aiScene *scene ,aiMesh *mesh){
-    float *vertices = (float*)malloc(mesh->mNumVertices*8*sizeof(float));
+    float *vertices = (float*)malloc(mesh->mNumVertices*14*sizeof(float));
     if(mesh->mTextureCoords[0]){
         for(int i = 0; i < mesh->mNumVertices; ++i){
-            vertices[i*8] = mesh->mVertices[i].x;
-            vertices[i*8+1] = mesh->mVertices[i].y;
-            vertices[i*8+2] = mesh->mVertices[i].z; 
+            vertices[i*14] = mesh->mVertices[i].x;
+            vertices[i*14+1] = mesh->mVertices[i].y;
+            vertices[i*14+2] = mesh->mVertices[i].z; 
 
-            vertices[i*8+3] = mesh->mNormals[i].x;
-            vertices[i*8+4] = mesh->mNormals[i].y;
-            vertices[i*8+5] = mesh->mNormals[i].z;
+            vertices[i*14+3] = mesh->mNormals[i].x;
+            vertices[i*14+4] = mesh->mNormals[i].y;
+            vertices[i*14+5] = mesh->mNormals[i].z;
 
-            vertices[i*8+6] = mesh->mTextureCoords[0][i].x;
-            vertices[i*8+7] = mesh->mTextureCoords[0][i].y;
+            vertices[i*14+6] = mesh->mTextureCoords[0][i].x;
+            vertices[i*14+7] = mesh->mTextureCoords[0][i].y;
+
+            vertices[i*14+8] = mesh->mTangents[i].x;
+            vertices[i*14+9] = mesh->mTangents[i].y;
+            vertices[i*14+10] = mesh->mTangents[i].z;
+
+            vertices[i*14+11] = mesh->mBitangents[i].x;
+            vertices[i*14+12] = mesh->mBitangents[i].y;
+            vertices[i*14+13] = mesh->mBitangents[i].z;
         }   
     }else{
         for(int i = 0; i < mesh->mNumVertices; ++i){
-            vertices[i*8] = mesh->mVertices[i].x;
-            vertices[i*8+1] = mesh->mVertices[i].y;
-            vertices[i*8+2] = mesh->mVertices[i].z; 
+            vertices[i*14] = mesh->mVertices[i].x;
+            vertices[i*14+1] = mesh->mVertices[i].y;
+            vertices[i*14+2] = mesh->mVertices[i].z; 
 
-            vertices[i*8+3] = mesh->mNormals[i].x;
-            vertices[i*8+4] = mesh->mNormals[i].y;
-            vertices[i*8+5] = mesh->mNormals[i].z;
+            vertices[i*14+3] = mesh->mNormals[i].x;
+            vertices[i*14+4] = mesh->mNormals[i].y;
+            vertices[i*14+5] = mesh->mNormals[i].z;
 
-            vertices[i*8+6] = 0;
-            vertices[i*8+7] = 0;
+            vertices[i*14+6] = 0;
+            vertices[i*14+7] = 0;
+
+            vertices[i*14+8] = mesh->mTangents[i].x;
+            vertices[i*14+9] = mesh->mTangents[i].y;
+            vertices[i*14+10] = mesh->mTangents[i].z;
+
+            vertices[i*14+11] = mesh->mBitangents[i].x;
+            vertices[i*14+12] = mesh->mBitangents[i].y;
+            vertices[i*14+13] = mesh->mBitangents[i].z;
         }   
     }
 
@@ -66,17 +83,20 @@ void model::process_mesh(const aiScene *scene ,aiMesh *mesh){
     aiMaterial *mat = scene->mMaterials[mesh->mMaterialIndex];
     int diffuse_count = mat->GetTextureCount(aiTextureType_DIFFUSE);
     int specular_count = mat->GetTextureCount(aiTextureType_SPECULAR);
-    texture_2d textures[diffuse_count+specular_count];
-    if(diffuse_count > 0) load_material(mat,aiTextureType_DIFFUSE,TEXTURE_DIFFUSE,diffuse_count,textures);
-    if(specular_count > 0) load_material(mat,aiTextureType_SPECULAR,TEXTURE_SPECULAR,specular_count,textures+diffuse_count);    
+    int normal_count = mat->GetTextureCount(aiTextureType_HEIGHT);
 
-    meshes[mesh_index++].initialize(vertices,indices,textures,mesh->mNumVertices,total_indices,diffuse_count+specular_count);
+    texture_2d textures[diffuse_count+specular_count+normal_count];
+    if(diffuse_count > 0) load_material(mat,aiTextureType_DIFFUSE,TEXTURE_DIFFUSE,diffuse_count,textures,gamma_corrected);
+    if(specular_count > 0) load_material(mat,aiTextureType_SPECULAR,TEXTURE_SPECULAR,specular_count,textures+diffuse_count,false);    
+    if(normal_count > 0) load_material(mat,aiTextureType_HEIGHT,TEXTURE_NORMAL,normal_count,textures+(diffuse_count+specular_count),false);
+
+    meshes[mesh_index++].initialize(vertices,indices,textures,mesh->mNumVertices,total_indices,diffuse_count+specular_count+normal_count);
     free(indices);
     free(vertices);
 }
 
 
-void model::load_material(aiMaterial *material,aiTextureType ai_textype, TEXTURE_TYPE texture_type, int count, texture_2d *textures){
+void model::load_material(aiMaterial *material,aiTextureType ai_textype, TEXTURE_TYPE texture_type, int count, texture_2d *textures,bool _gamma_corrected){
     for(int i = 0; i < count; ++i){
         aiString path;
         material->GetTexture(ai_textype,i,&path);
@@ -84,7 +104,7 @@ void model::load_material(aiMaterial *material,aiTextureType ai_textype, TEXTURE
 
         string temp = path_str+string(1,'/')+string(file);
         if(mp.find(temp) == mp.end()){
-            textures[i].initialize(temp.c_str());
+            textures[i].initialize(temp.c_str(),_gamma_corrected);
             textures[i].texture_type = texture_type;
             mp[temp] = textures[i];
         }else{

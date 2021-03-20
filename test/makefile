@@ -1,5 +1,5 @@
 .PHONY : build_all
-build_all : build_directories exec/test-texture exec/test-rect exec/test-camera exec/test-model
+build_all : build_directories exec/test-texture exec/test-rect exec/test-camera exec/test-model exec/test-lighting exec/test-adv-lighting
 
 APP=test-rect
 OPTIMIZED= 
@@ -44,6 +44,26 @@ ifeq ($(OPTIMIZED),TRUE)
 	g++ src/test-model.cpp -O3 -c -o bin/test-model.o -I../include -I ../dependencies/stb
 else
 	g++ src/test-model.cpp -c -o bin/test-model.o -I../include -I ../dependencies/stb
+endif
+
+exec/test-lighting : bin/test-lighting.o
+	g++ bin/test-lighting.o -l gl-wrapper -lGL -lGLU -lGLEW -lSDL2 -lassimp -L../lib -o exec/test-lighting
+
+bin/test-lighting.o : src/test-lighting.cpp
+ifeq ($(OPTIMIZED),TRUE)
+	g++ src/test-lighting.cpp -O3 -c -o bin/test-lighting.o -I../include -I ../dependencies/stb
+else
+	g++ src/test-lighting.cpp -c -o bin/test-lighting.o -I../include -I ../dependencies/stb
+endif
+
+exec/test-adv-lighting : bin/test-adv-lighting.o
+	g++ bin/test-adv-lighting.o -l gl-wrapper -lGL -lGLU -lGLEW -lSDL2 -lassimp -L../lib -o exec/test-adv-lighting
+
+bin/test-adv-lighting.o : src/test-adv-lighting.cpp
+ifeq ($(OPTIMIZED),TRUE)
+	g++ src/test-adv-lighting.cpp -O3 -c -o bin/test-adv-lighting.o -I../include -I ../dependencies/stb
+else
+	g++ src/test-adv-lighting.cpp -c -o bin/test-adv-lighting.o -I../include -I ../dependencies/stb
 endif
 
 .PHONY : build_directories

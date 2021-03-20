@@ -22,13 +22,39 @@ int main(){
     bool quit = false;
     unsigned long long reference_tick;
 
-    program _program("msc/shaders/test-model/vs.glsl","msc/shaders/test-model/fs.glsl");
+    program _program("msc/shaders/test-lighting/vs.glsl","msc/shaders/test-lighting/fs.glsl");
+
+    GLuint ubo_projection,ubo_view,ubo_light,ubo_camera;
+
+    glGenBuffers(1,&ubo_projection);
+    glBindBuffer(GL_UNIFORM_BUFFER,ubo_projection);
+    glBufferData(GL_UNIFORM_BUFFER,sizeof(glm::mat4),glm::value_ptr(glm::perspective(glm::radians(45.0f),(float)window_width/window_height,0.1f,100.0f)),GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER,0,ubo_projection);
 
     camera _camera({0,0,3});
+
+    glGenBuffers(1,&ubo_view);
+    glBindBuffer(GL_UNIFORM_BUFFER,ubo_view);
+    glBufferData(GL_UNIFORM_BUFFER,sizeof(glm::mat4),glm::value_ptr(_camera.view_matrix),GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER,1,ubo_view);
+
+    float ambient = 0.1, diffuse = 0.9, specular = 0.5, constant = 1.0, linear = 0.01, quadratic = 0.01;
+    glm::vec3 position(3.0,3.0,3.0);
+    glm::vec4 a(position,constant),b(glm::vec3(ambient),linear),c(glm::vec3(diffuse),quadratic),d(glm::vec3(specular),0.0);
+    glm::mat4 light(a,b,c,d);
+
+    glGenBuffers(1,&ubo_light);
+    glBindBuffer(GL_UNIFORM_BUFFER,ubo_light);
+    glBufferData(GL_UNIFORM_BUFFER,sizeof(glm::mat4),glm::value_ptr(light),GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER,2,ubo_light);
+
+    glGenBuffers(1,&ubo_camera);
+    glBindBuffer(GL_UNIFORM_BUFFER,ubo_camera);
+    glBufferData(GL_UNIFORM_BUFFER,sizeof(glm::vec4),glm::value_ptr(glm::vec4(_camera.position,0.0)),GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER,3,ubo_camera);
+
     _program.use();
     _program.set_mat4x4("model",glm::mat4(1.0));
-    _program.set_mat4x4("view",_camera.view_matrix);
-    _program.set_mat4x4("projection",glm::perspective(glm::radians(45.0f),(float)window_width/window_height,0.1f,100.0f));
     _program.set_int("tex",0);
 
     stbi_set_flip_vertically_on_load(true);
@@ -36,7 +62,6 @@ int main(){
 
     SDL_ShowCursor(0);
     glEnable(GL_DEPTH_TEST);
-
     while(!quit){
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_QUIT){
@@ -57,7 +82,8 @@ int main(){
                 _camera.pitch = _camera.pitch>89?89:_camera.pitch<-89?-89:_camera.pitch;
 
                 _camera.compute_matrices();
-                _program.set_mat4x4("view",_camera.view_matrix);
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_view);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::mat4),glm::value_ptr(_camera.view_matrix));
 
                 SDL_WarpMouseInWindow(window,window_width/2,window_height/2);
             }
@@ -67,22 +93,38 @@ int main(){
             if(keystate[SDL_SCANCODE_W]){
                 _camera.position += _camera.front / glm::vec3(fps) * glm::vec3(2.0);
                 _camera.compute_matrices_move();
-                _program.set_mat4x4("view",_camera.view_matrix);
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_view);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::mat4),glm::value_ptr(_camera.view_matrix));
+
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_camera);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::vec4),glm::value_ptr(glm::vec4(_camera.position,0.0)));
             }
             if(keystate[SDL_SCANCODE_A]){
                 _camera.position -= _camera.side / glm::vec3(fps) * glm::vec3(2.0);
                 _camera.compute_matrices_move();
-                _program.set_mat4x4("view",_camera.view_matrix);
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_view);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::mat4),glm::value_ptr(_camera.view_matrix));
+
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_camera);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::vec4),glm::value_ptr(glm::vec4(_camera.position,0.0)));
             }
             if(keystate[SDL_SCANCODE_S]){
                 _camera.position -= _camera.front / glm::vec3(fps) * glm::vec3(2.0);
                 _camera.compute_matrices_move();
-                _program.set_mat4x4("view",_camera.view_matrix);
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_view);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::mat4),glm::value_ptr(_camera.view_matrix));
+
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_camera);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::vec4),glm::value_ptr(glm::vec4(_camera.position,0.0)));
             }
             if(keystate[SDL_SCANCODE_D]){
                 _camera.position += _camera.side / glm::vec3(fps) * glm::vec3(2.0);
                 _camera.compute_matrices_move();
-                _program.set_mat4x4("view",_camera.view_matrix);
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_view);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::mat4),glm::value_ptr(_camera.view_matrix));
+
+                glBindBuffer(GL_UNIFORM_BUFFER,ubo_camera);
+                glBufferSubData(GL_UNIFORM_BUFFER,0,sizeof(glm::vec4),glm::value_ptr(glm::vec4(_camera.position,0.0)));
             }
 
             glClearColor(0.2f,0.2f,0.2f,1.0f);
@@ -98,6 +140,8 @@ int main(){
     }
     
     _model.destroy();
+    _program.destroy();
+    SDL_DestroyWindow(window);
     SDL_GL_DeleteContext(context);
     SDL_Quit();
     return 0;

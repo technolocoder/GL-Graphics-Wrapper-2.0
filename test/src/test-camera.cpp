@@ -22,7 +22,7 @@ int main(){
     bool quit = false;
     unsigned long long reference_tick;
 
-    texture_2d tex("msc/textures/test-texture.jpg");
+    texture_2d tex("msc/textures/test-texture.jpg",false);
     program _program("msc/shaders/test-camera/vs.glsl","msc/shaders/test-camera/fs.glsl");
 
     camera _camera({0,0,3});

@@ -20,7 +20,7 @@ int main(){
     int frame_delay = 1000/fps;
     unsigned long long reference_tick;
 
-    texture_2d tex("msc/textures/test-texture.jpg");
+    texture_2d tex("msc/textures/test-texture.jpg",false);
     program _program("msc/shaders/test-texture/vs.glsl","msc/shaders/test-texture/fs.glsl");
 
     float vertices[] = {
